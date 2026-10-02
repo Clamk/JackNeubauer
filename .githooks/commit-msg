@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuse a commit message that contains a personal email, path or secret.
+exec sh "$(git rev-parse --show-toplevel)/.githooks/check-privacy.sh" --message "$1"

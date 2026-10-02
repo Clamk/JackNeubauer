@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuse a commit with a non-noreply email, or with a personal path, email or secret in the staged changes.
+guard="$(git rev-parse --show-toplevel)/.githooks/check-privacy.sh"
+sh "$guard" --identity && sh "$guard" --staged

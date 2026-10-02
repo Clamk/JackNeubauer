@@ -1,0 +1,15 @@
+#!/bin/sh
+# Refuse to push commits that carry a personal email, path or secret (identity, message and content).
+zero=0000000000000000000000000000000000000000
+guard="$(git rev-parse --show-toplevel)/.githooks/check-privacy.sh"
+
+while read -r _ local_sha _ remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue            # branch deletion
+  if [ "$remote_sha" = "$zero" ]; then
+    range="$local_sha --not --remotes"              # new branch: only what the remote lacks
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  # shellcheck disable=SC2086
+  sh "$guard" $range || exit 1
+done
