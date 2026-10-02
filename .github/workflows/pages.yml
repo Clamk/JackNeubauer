@@ -1,0 +1,66 @@
+name: Deploy web build to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # Nothing is built or deployed if the pushed commits or the files carry a personal email,
+  # a private local path or a secret. Only what the push adds is checked (plus every file as it is now),
+  # so history that was published earlier does not fail every run.
+  privacy-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commits and files
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Manual run, new branch or force push (old tip not fetched): no range, files only.
+          range=""
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ -n "$BEFORE" ] \
+             && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] \
+             && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..$GITHUB_SHA"
+          fi
+          if [ -n "$range" ]; then sh .githooks/check-privacy.sh $range; fi
+          sh .githooks/check-privacy.sh --tree
+
+  build:
+    needs: privacy-guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # A wrong number is not deployed: the calculation is checked against docs/CALCULATIONS.md.
+      - run: npm run check:calc
+      - run: npx expo export --platform web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
