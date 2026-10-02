@@ -1,23 +1,43 @@
 # CellCounter
 
-Expo SDK 57 / React Native live/dead hemocytometer counter (Android, iOS, web). Features and formulas: [README.md](README.md). Architecture and rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); read the relevant section before changing that area.
+Expo SDK 57 / React Native live/dead hemocytometer counter (Android, iOS, web). It is meant to keep evolving through AI agents, and these docs are what the next session starts from: keep them true.
+
+- [README.md](README.md): features, setup.
+- [docs/CALCULATIONS.md](docs/CALCULATIONS.md): the chambers, the formulas, the dilution rules and the rounding. It is the reference for every number the app shows.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code works and why. Read the section for an area before changing it. "Changing the app" has the recipes, the identifiers with outside effects, the checks and the current limits.
+- [LLM feed for visual/LLMfeed_VISUAL-IDENTITY.md](LLM%20feed%20for%20visual/LLMfeed_VISUAL-IDENTITY.md): the clamk-tools visual identity. Follow it for any UI change.
 
 ## Commands
 
 - `npm start` / `npm run web` / `npm run android` / `npm run ios`
-- Check: `npx tsc --noEmit` (no tests, no linter)
+- Check: `npx tsc --noEmit` and `npm run check:calc` (no other tests, no linter), then the rest of "Checking a change"
+
+## Workflow
+
+1. Read the ARCHITECTURE section for the area. Find code by symbol name: the docs use the code's identifiers.
+2. Make the change. Restructure freely when it makes the app better or easier to change (splitting `App.tsx`, a new library, a test framework); "Current limits" says what a split keeps.
+3. Run the checks in "Checking a change". Say which you ran and which you could not, for example Android-only behaviour.
+4. Update the docs in the same change ("Docs" below).
 
 ## Rules
 
-- Nearly all code is in `App.tsx`. `fonts.android.ts` is empty on purpose.
+- Nearly all code is in `App.tsx` today; the calculation is in `calc.ts`. `fonts.android.ts` is empty on purpose.
+- Results are exact: compute in `calc.ts` with `Frac` (`BigInt`), never floating point, and round only in `formatSci` / `formatFixed`. A change to a chamber, formula or rounding changes `calc.ts`, CALCULATIONS.md and `scripts/check-calc.mjs` together ("Calculation").
 - Keep `Square`'s `events`, `live`/`dead` and `touched` in sync ("Data model").
 - Count with `onPressIn` plus `noPressDelay`, and keep the zones' accessibility actions ("Counting path").
-- Fonts: change `fonts.ts`, the `expo-font` list in `app.json` and `SHAPES` together.
+- Fonts: change `fonts.ts`, the `expo-font` list in `app.json` and `FONTS` together.
 - New setting: validate it on load and add it to the save effect's JSON and deps ("State and persistence").
 - Keep render pure (no module writes or `ref.current` access) so the React Compiler compiles every component ("React Compiler").
 - Web: `confirmDestructive`, not `Alert.alert`.
 - Native config goes in `app.json`; `android/` and `ios/` are generated.
-- Update `docs/ARCHITECTURE.md` when structure or behaviour changes, and the README for user-facing features.
+- Colours come from `THEMES` and styles from `makeStyles`: no colour literals in components ("Theming").
+- Storage keys and field names, chamber and layout keys, formulas and factors, the Android package and `baseUrl` have effects outside the code. Change them when needed, handle the effect in the same change and say so ("Identifiers with outside effects").
+
+## Docs
+
+- One fact, one place: the README for what users see and how to run it, CALCULATIONS for the chambers and the numbers, ARCHITECTURE for how, why and how to change it, this file for rules and pointers.
+- Update ARCHITECTURE when structure or behaviour changes, CALCULATIONS when a number or a rule behind one changes, the README for user-facing features, and this file when a rule changes.
+- Name symbols and section titles, never line numbers. Delete what stops being true; history belongs in git.
 
 ## Privacy: publish nothing personal
 

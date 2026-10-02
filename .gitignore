@@ -51,3 +51,14 @@ PLAN.md
 
 # Reference material copied from private projects
 from-*/
+
+# Editor settings and local history (they name local paths)
+.vscode/
+.idea/
+*.code-workspace
+local-history/
+Thumbs.db
+
+# Signing material
+*.keystore
+credentials.json

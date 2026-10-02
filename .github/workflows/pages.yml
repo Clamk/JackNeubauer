@@ -48,6 +48,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # A wrong number is not deployed: the calculation is checked against docs/CALCULATIONS.md.
+      - run: npm run check:calc
       - run: npx expo export --platform web
       - uses: actions/upload-pages-artifact@v3
         with:
